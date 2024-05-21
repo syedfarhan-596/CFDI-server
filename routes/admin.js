@@ -3,27 +3,31 @@ const multer = require("multer");
 const router = express.Router();
 const path = require("path");
 
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      // determine destination dynamically based on file fieldname
-      if (file.fieldname === "offerletter") {
-        cb(null, path.join(__dirname, "../uploads/user/offerletter"));
-      } else if (file.fieldname === "certificate") {
-        cb(null, path.join(__dirname, "../uploads/user/certificate"));
-      } else {
-        // Handle invalid fieldname
-        cb(new Error("Invalid field name"));
-      }
-    },
-    filename: function (req, file, cb) {
-      const fileExtension = path.extname(file.originalname);
-      const uniqueSuffix =
-        Date.now() + "-" + Math.round(Math.random() * 1e9) + fileExtension;
-      cb(null, file.fieldname + "-" + uniqueSuffix);
-    },
-  }),
-});
+// const upload = multer({
+//   storage: multer.diskStorage({
+//     destination: function (req, file, cb) {
+//       // determine destination dynamically based on file fieldname
+//       if (file.fieldname === "offerletter") {
+//         cb(null, path.join(__dirname, "../uploads/user/offerletter"));
+//       } else if (file.fieldname === "certificate") {
+//         cb(null, path.join(__dirname, "../uploads/user/certificate"));
+//       } else {
+//         // Handle invalid fieldname
+//         cb(new Error("Invalid field name"));
+//       }
+//     },
+//     filename: function (req, file, cb) {
+//       const fileExtension = path.extname(file.originalname);
+//       const uniqueSuffix =
+//         Date.now() + "-" + Math.round(Math.random() * 1e9) + fileExtension;
+//       cb(null, file.fieldname + "-" + uniqueSuffix);
+//     },
+//   }),
+// });
+
+const storage = multer.memoryStorage();
+
+const upload = multer({ storage: storage });
 
 const {
   CreateAdminController,

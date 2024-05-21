@@ -26,7 +26,7 @@ class UserOtp {
       specialChars: false,
     });
     const count = await OTP.countDocuments({ email });
-
+    console.log(otp);
     if (count > 10) {
       throw new BadRequestError(
         "Multiple otp request failed. Please try after 1hr"
@@ -60,13 +60,14 @@ class UserOtp {
 }
 
 class UserAuthentication {
-  static async createUser(reqBody, reqFile) {
+  static async createUser(reqBody, reqFile, fileName) {
     const { password } = reqBody;
 
     const salt = await bcrypt.genSalt(10);
     reqBody.password = await bcrypt.hash(password, salt);
-
-    reqBody.resume = reqFile.filename;
+    if (reqFile) {
+      reqBody.resume = fileName;
+    }
 
     const user = await User.create(reqBody);
 

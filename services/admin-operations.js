@@ -3,6 +3,22 @@ const Admin = require("../models/admin");
 const { UnauthorizedError, BadRequestError } = require("../errors");
 const SendMail = require("../nodemailer");
 const { statusChange } = require("./email-messages");
+
+const bucketRegion = process.env.BUCKET_REGION;
+const bucketName = process.env.BUCKET_NAME;
+const awsAccessKey = process.env.AWS_ACCESS_KEY;
+const awsSecretKey = process.env.AWS_SECRET_KEY;
+
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
+const s3 = new S3Client({
+  credentials: {
+    accessKeyId: awsAccessKey,
+    secretAccessKey: awsSecretKey,
+  },
+  region: bucketRegion,
+});
+
 class AdminOperations {
   static async getUsers(reqQuery) {
     let QueryObject = {};
@@ -182,7 +198,24 @@ class AdminOperations {
           emailMessage = `Dear ${user?.name?.first} `;
 
           if (reqFile?.offerletter[0]?.fieldname === "offerletter") {
-            user.status.offerLetter = reqFile?.offerletter[0]?.filename;
+            const uniqueSuffix =
+              Date.now() + "-" + Math.round(Math.random() * 1e9);
+            const fileExtension = reqFile?.offerletter[0].originalname
+              .split(".")
+              .pop();
+            const fileName = `${reqFile.offerletter[0].fieldname}-${uniqueSuffix}.${fileExtension}`;
+
+            const params = {
+              Bucket: bucketName,
+              Key: `uploads/offerletter/${fileName}`,
+              Body: reqFile.offerletter[0].buffer,
+              ContentType: reqFile.offerletter[0].mineType,
+            };
+
+            const command = new PutObjectCommand(params);
+            await s3.send(command);
+
+            user.status.offerLetter = fileName;
           } else {
             throw new BadRequestError("Error file recieved");
           }
@@ -215,8 +248,24 @@ class AdminOperations {
           emailMessage = "Certificate updated";
 
           if (reqFile.certificate[0]?.fieldname === "certificate") {
-            user.status.completionCertificate =
-              reqFile?.certificate[0]?.filename;
+            const uniqueSuffix =
+              Date.now() + "-" + Math.round(Math.random() * 1e9);
+            const fileExtension = reqFile.certificate[0].originalname
+              .split(".")
+              .pop();
+            const fileName = `${reqFile.certificate[0].fieldname}-${uniqueSuffix}.${fileExtension}`;
+
+            const params = {
+              Bucket: bucketName,
+              Key: `uploads/certificate/${fileName}`,
+              Body: reqFile.certificate[0].buffer,
+              ContentType: reqFile.certificate[0].mineType,
+            };
+
+            const command = new PutObjectCommand(params);
+            await s3.send(command);
+
+            user.status.completionCertificate = fileName;
           } else {
             throw new BadRequestError("Error file recieved");
           }

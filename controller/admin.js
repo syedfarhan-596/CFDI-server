@@ -1,7 +1,22 @@
 const { StatusCodes } = require("http-status-codes");
 const { AdminAuthentication, AdminOtp } = require("../services/admin-auth");
 const { AdminOperations } = require("../services/admin-operations");
-const User = require("../models/user");
+
+const bucketRegion = process.env.BUCKET_REGION;
+const bucketName = process.env.BUCKET_NAME;
+const awsAccessKey = process.env.AWS_ACCESS_KEY;
+const awsSecretKey = process.env.AWS_SECRET_KEY;
+
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
+const s3 = new S3Client({
+  credentials: {
+    accessKeyId: awsAccessKey,
+    secretAccessKey: awsSecretKey,
+  },
+  region: bucketRegion,
+});
 
 const SendOTPAdmin = async (req, res) => {
   const { message, success } = await AdminOtp.createOtp(req.body);
@@ -54,6 +69,14 @@ const GetUsersStatistics = async (req, res) => {
 
 const GetSingleUser = async (req, res) => {
   const { user } = await AdminOperations.getUser(req.params.userId);
+  const getObjectParams = {
+    Bucket: bucketName,
+    Key: `uploads/resumes/${user.resume}`,
+  };
+  const command = new GetObjectCommand(getObjectParams);
+  const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+
+  user.resume = url;
   res.status(StatusCodes.OK).json({ user });
 };
 

@@ -3,15 +3,16 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, "../uploads/user/resume"),
-  filename: function (req, file, cb) {
-    const fileExtension = path.extname(file.originalname);
-    const uniqueSuffix =
-      Date.now() + "-" + Math.round(Math.random() * 1e9) + fileExtension;
-    cb(null, file.fieldname + "-" + uniqueSuffix);
-  },
-});
+const storage = multer.memoryStorage();
+//   {
+//   destination: path.join(__dirname, "../uploads/user/resume"),
+//   filename: function (req, file, cb) {
+//     const fileExtension = path.extname(file.originalname);
+//     const uniqueSuffix =
+//       Date.now() + "-" + Math.round(Math.random() * 1e9) + fileExtension;
+//     cb(null, file.fieldname + "-" + uniqueSuffix);
+//   },
+// }
 
 const upload = multer({ storage: storage });
 
