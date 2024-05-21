@@ -3,7 +3,7 @@ const { BadRequestError, UnauthorizedError } = require("../errors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const otpGenerator = require("otp-generator");
-const OTP = require("../models/otp");
+const OTP = require("../models/OTP");
 const SendMail = require("../nodemailer");
 
 class UserOtp {
