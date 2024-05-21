@@ -2,7 +2,7 @@ const { BadRequestError, UnauthorizedError } = require("../errors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const Admin = require("../models/admin");
-const OTP = require("../models/otp");
+const OTP = require("../models/OTP");
 const otpGenerator = require("otp-generator");
 
 class AdminAuthentication {

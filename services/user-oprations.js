@@ -1,5 +1,5 @@
 const User = require("../models/user");
-const { BadRequestError, UnauthorizedError } = require("../errors");
+const { UnauthorizedError } = require("../errors");
 const SendMail = require("../nodemailer");
 
 const bcrypt = require("bcryptjs");
