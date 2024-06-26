@@ -28,8 +28,8 @@ const s3 = new S3Client({
   region: bucketRegion,
 });
 
-const CreateUserController = async (req, res) => {
-  await UserOtp.verifyOtp(req.body);
+const CreateTempUserController = async (req, res) => {
+  const { success, message } = await UserOtp.createOtp(req.body);
   const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
   const fileExtension = req.file.originalname.split(".").pop();
   const fileName = `${req.file.fieldname}-${uniqueSuffix}.${fileExtension}`;
@@ -43,14 +43,15 @@ const CreateUserController = async (req, res) => {
   const command = new PutObjectCommand(params);
 
   await s3.send(command);
-  const { token, name } = await UserAuthentication.createUser(
-    req.body,
-    req.file,
-    fileName
-  );
-  res.status(StatusCodes.CREATED).json({ token, name });
+  await UserAuthentication.createTempUser(req.body, req.file, fileName);
+  res.status(StatusCodes.CREATED).json({ success, message });
 };
 
+const CreateUserController = async (req, res) => {
+  await UserOtp.verifyOtp(req.body);
+  const { token, name } = await UserAuthentication.createUser(req.body);
+  res.status(StatusCodes.CREATED).json({ token, name });
+};
 const LoginUserController = async (req, res) => {
   const { token, name } = await UserAuthentication.loginUser(req.body);
   res.status(StatusCodes.OK).json({ token, name });
@@ -92,6 +93,7 @@ const ForgotPassword = async (req, res) => {
 };
 
 module.exports = {
+  CreateTempUserController,
   CreateUserController,
   LoginUserController,
   GetUserController,

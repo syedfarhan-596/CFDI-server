@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const TempUser = require("../models/temp-user");
 const { BadRequestError, UnauthorizedError } = require("../errors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -8,30 +9,13 @@ const SendMail = require("../nodemailer");
 
 class UserOtp {
   static async createOtp(reqBody) {
-    const { email, reset } = reqBody;
-    const user = await User.findOne({ email });
-    if (!reset) {
-      if (user) {
-        throw new BadRequestError("Email already exsist");
-      }
-    }
-    if (reset) {
-      if (!user) {
-        throw new BadRequestError("No account found with that email");
-      }
-    }
+    const { email } = reqBody;
+
     let otp = otpGenerator.generate(4, {
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,
       specialChars: false,
     });
-    const count = await OTP.countDocuments({ email });
-    console.log(otp);
-    if (count > 10) {
-      throw new BadRequestError(
-        "Multiple otp request failed. Please try after 1hr"
-      );
-    }
 
     await OTP.create({ email, otp });
     SendMail(
@@ -60,23 +44,40 @@ class UserOtp {
 }
 
 class UserAuthentication {
-  static async createUser(reqBody, reqFile, fileName) {
-    const { password } = reqBody;
-
-    const salt = await bcrypt.genSalt(10);
-    reqBody.password = await bcrypt.hash(password, salt);
-    if (reqFile) {
-      reqBody.resume = fileName;
+  static async createTempUser(reqBody, reqFile, fileName) {
+    const { password, email } = reqBody;
+    const user = await User.findOne({ email });
+    if (user) {
+      throw new BadRequestError("User Already Exsist");
+    }
+    const tempUser = await TempUser.findOne({ email });
+    if (!tempUser) {
+      const salt = await bcrypt.genSalt(10);
+      reqBody.password = await bcrypt.hash(password, salt);
+      if (reqFile) {
+        reqBody.resume = fileName;
+      }
+      await TempUser.create(reqBody);
     }
 
-    const user = await User.create(reqBody);
-
+    return;
+  }
+  static async createUser(reqBody) {
+    const { email } = reqBody;
+    const tempUser = await TempUser.findOne({ email }).select(
+      "email password resume number name internshipDomain status"
+    );
+    if (!tempUser) {
+      throw new BadRequestError(
+        "something went wrong, Trying creating account later"
+      );
+    }
+    const tempUserData = tempUser.toObject();
+    const user = await User.create(tempUserData);
     const token = jwt.sign(
       { userId: user._id, name: user.fullName },
       process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      }
+      { expiresIn: process.env.KEY_LIFE }
     );
 
     return { token, name: user.fullName };
@@ -101,7 +102,7 @@ class UserAuthentication {
     const token = jwt.sign(
       { userId: user._id, name: user.fullName },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: process.env.KEY_LIFE }
     );
 
     return { token, name: user.fullName };

@@ -280,7 +280,6 @@ class AdminOperations {
 
       return { success: true, message: "Done" };
     } catch (error) {
-      console.log(error);
       return { success: false, message: "something went wrong" };
     }
   }

@@ -57,7 +57,6 @@ class UserOperations {
       return { user };
     }
     if (reqBody.updateUser) {
-      console.log(reqBody);
       const user = await User.findByIdAndUpdate(
         reqUser.userId,
         {
@@ -65,7 +64,6 @@ class UserOperations {
         },
         { new: true }
       ).select("-password");
-      console.log(user);
       SendMail(
         user.email,
         "Task submission",

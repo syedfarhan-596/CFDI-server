@@ -1,23 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const path = require("path");
 
 const storage = multer.memoryStorage();
-//   {
-//   destination: path.join(__dirname, "../uploads/user/resume"),
-//   filename: function (req, file, cb) {
-//     const fileExtension = path.extname(file.originalname);
-//     const uniqueSuffix =
-//       Date.now() + "-" + Math.round(Math.random() * 1e9) + fileExtension;
-//     cb(null, file.fieldname + "-" + uniqueSuffix);
-//   },
-// }
 
 const upload = multer({ storage: storage });
 
 const {
   CreateUserController,
+  CreateTempUserController,
   LoginUserController,
   GetUserController,
   UpdateUserController,
@@ -29,8 +20,10 @@ const UserAuthorizationMiddleware = require("../middleware/user-authorization");
 
 router.route("/sendotp").post(SendOtpToEmail);
 router
-  .route("/register")
-  .post(upload.single("resumeFile"), CreateUserController);
+  .route("/temp/register")
+  .post(upload.single("resumeFile"), CreateTempUserController);
+
+router.route("/register").post(CreateUserController);
 router.route("/login").post(LoginUserController);
 
 router.route("/user").get(UserAuthorizationMiddleware, GetUserController);
