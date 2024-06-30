@@ -182,7 +182,7 @@ class AdminOperations {
     try {
       const { type } = data;
 
-      let user = await User.findById(userId);
+      let user = await User.findById(userId).select("-password");
 
       if (!user) {
         throw new BadRequestError("No user found");
@@ -278,7 +278,7 @@ class AdminOperations {
       await user.save();
       SendMail(user?.email, subjectMessage, emailMessage, statusChange);
 
-      return { success: true, message: "Done" };
+      return { success: true, message: "Done", user };
     } catch (error) {
       return { success: false, message: "something went wrong" };
     }

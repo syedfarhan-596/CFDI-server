@@ -81,13 +81,13 @@ const GetSingleUser = async (req, res) => {
 };
 
 const UpdateUser = async (req, res) => {
-  const { success, message } = await AdminOperations.updateUser(
+  const { success, message, user } = await AdminOperations.updateUser(
     req.params.userId,
     req.body,
     req.files
   );
 
-  res.status(StatusCodes.OK).json({ success, message });
+  res.status(StatusCodes.OK).json({ success, message, user });
 };
 
 module.exports = {
