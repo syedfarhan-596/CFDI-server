@@ -51,7 +51,9 @@ class UserAuthentication {
       throw new BadRequestError("User Already Exsist");
     }
     const tempUser = await TempUser.findOne({ email });
-    if (!tempUser) {
+    if (tempUser) {
+      return { redirect: true };
+    } else {
       const salt = await bcrypt.genSalt(10);
       reqBody.password = await bcrypt.hash(password, salt);
       if (reqFile) {
@@ -60,7 +62,7 @@ class UserAuthentication {
       await TempUser.create(reqBody);
     }
 
-    return;
+    return { redirect: false };
   }
   static async createUser(reqBody) {
     const { email } = reqBody;
@@ -74,6 +76,7 @@ class UserAuthentication {
     }
     const tempUserData = tempUser.toObject();
     const user = await User.create(tempUserData);
+    tempUser.deleteOne();
     const token = jwt.sign(
       { userId: user._id, name: user.fullName },
       process.env.JWT_SECRET,

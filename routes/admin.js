@@ -10,7 +10,6 @@ const {
   CreateAdminController,
   LoginAdminController,
   GetUsersForAdminController,
-  SendOTPAdmin,
   GetAdmin,
   GetUsersCount,
   GetAllAdmins,
@@ -21,7 +20,6 @@ const {
 } = require("../controller/admin");
 const AdminAuthenticationMiddleware = require("../middleware/admin-authorization");
 
-router.route("/sendotp").post(SendOTPAdmin);
 router.route("/register").post(CreateAdminController);
 router.route("/login").post(LoginAdminController);
 router.route("/admin").get(AdminAuthenticationMiddleware, GetAdmin);

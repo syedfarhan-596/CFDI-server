@@ -18,13 +18,7 @@ const s3 = new S3Client({
   region: bucketRegion,
 });
 
-const SendOTPAdmin = async (req, res) => {
-  const { message, success } = await AdminOtp.createOtp(req.body);
-  res.status(StatusCodes.OK).json({ message, success });
-};
-
 const CreateAdminController = async (req, res) => {
-  await AdminOtp.verifyOtp(req.body);
   const { token, name } = await AdminAuthentication.createAdmin(req.body);
   res.status(StatusCodes.CREATED).json({ token, name });
 };
@@ -94,7 +88,6 @@ module.exports = {
   CreateAdminController,
   LoginAdminController,
   GetUsersForAdminController,
-  SendOTPAdmin,
   GetAdmin,
   GetUsersCount,
   GetAllAdmins,

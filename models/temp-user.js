@@ -39,6 +39,4 @@ const TempUserSchema = new mongoose.Schema(
   }
 );
 
-TempUserSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 });
-
 module.exports = mongoose.model("TempUser", TempUserSchema);
