@@ -14,9 +14,12 @@ const {
   UpdateUserController,
   ForgotPassword,
   SendOtpToEmail,
+  SendMailController,
 } = require("../controller/user");
 
 const UserAuthorizationMiddleware = require("../middleware/user-authorization");
+
+router.route("/mail", SendMailController);
 
 router.route("/sendotp").post(SendOtpToEmail);
 router

@@ -2,7 +2,7 @@ const { StatusCodes } = require("http-status-codes");
 const { UserAuthentication } = require("../services/user-auth");
 const { UserOperations } = require("../services/user-oprations");
 const { UserOtp } = require("../services/user-auth");
-
+const SendMail = require("../nodemailer");
 const SendOtpToEmail = async (req, res) => {
   const { success, message } = await UserOtp.createOtp(req.body);
   res.status(StatusCodes.OK).json({ success, message });
@@ -100,6 +100,15 @@ const ForgotPassword = async (req, res) => {
   res.status(StatusCodes.OK).json({ message });
 };
 
+const SendMailController = (req, res) => {
+  SendMail(
+    "info@codefordigitalindia.com",
+    `Email Recived form ${req.body.name}`,
+    `Sender contact email ${req.body.email}`,
+    req.body.message
+  );
+};
+
 module.exports = {
   CreateTempUserController,
   CreateUserController,
@@ -107,5 +116,6 @@ module.exports = {
   GetUserController,
   UpdateUserController,
   SendOtpToEmail,
+  SendMailController,
   ForgotPassword,
 };
