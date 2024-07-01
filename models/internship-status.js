@@ -21,13 +21,6 @@ const InternshipStatus = new mongoose.Schema({
   completionCertificate: {
     type: String,
   },
-  lor: {
-    type: String,
-  },
-  swags: {
-    type: Boolean,
-    default: false,
-  },
 });
 
 module.exports = { InternshipStatus };

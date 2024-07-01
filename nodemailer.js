@@ -17,15 +17,21 @@ async function SendMail(senderEmail, subject, text, body) {
       to: senderEmail, // list of receivers
       subject: subject, // Subject line
       html: `
-        <div style="font-family: Arial, sans-serif;">
-          <p><strong>${subject}</strong></p>
-          <p>${text}</p>
-          <p>${body}</p>
-          <hr />
-          <p style="font-size: 12px; color: #777;">This email was sent via Code For Digital India.</p>
+               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ccc; border-radius: 10px; overflow: hidden; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+          <div style="background-color: #f8f9fa; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; color: #007bff;">${subject}</h2>
+          </div>
+          <div style="padding: 20px;">
+            <p style="font-size: 16px; color: #333;">${text}</p>
+            <p style="font-size: 16px; color: #333;">${body}</p>
+          </div>
+          <div style="background-color: #f8f9fa; padding: 10px; text-align: center; font-size: 12px; color: #777;">
+            <p style="margin: 0;">This email was sent via Code For Digital India.</p>
+          </div>
         </div>
       `, // HTML body
     });
+
     return { success: true, message: "Email sent successfully" };
   } catch (error) {
     console.error("Error occurred while sending email:", error);

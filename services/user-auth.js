@@ -76,7 +76,7 @@ class UserAuthentication {
     }
     const tempUserData = tempUser.toObject();
     const user = await User.create(tempUserData);
-    tempUser.deleteOne();
+    await TempUser.findOneAndDelete({ email });
     const token = jwt.sign(
       { userId: user._id, name: user.fullName },
       process.env.JWT_SECRET,

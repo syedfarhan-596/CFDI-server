@@ -17,14 +17,22 @@ const {
   GetUsersStatistics,
   GetSingleUser,
   UpdateUser,
+  DeleteUserStatus,
+  DeleteUser,
 } = require("../controller/admin");
 const AdminAuthenticationMiddleware = require("../middleware/admin-authorization");
 
 router.route("/register").post(CreateAdminController);
 router.route("/login").post(LoginAdminController);
 router.route("/admin").get(AdminAuthenticationMiddleware, GetAdmin);
+router
+  .route("/delete/:userId/:status")
+  .delete(AdminAuthenticationMiddleware, DeleteUserStatus);
 router.route("/count").get(AdminAuthenticationMiddleware, GetUsersCount);
 router.route("/admins").get(AdminAuthenticationMiddleware, GetAllAdmins);
+router
+  .route("/delete/:userId")
+  .delete(AdminAuthenticationMiddleware, DeleteUser);
 router
   .route("/user/:userId")
   .get(AdminAuthenticationMiddleware, GetSingleUser)

@@ -9,7 +9,11 @@ const bucketName = process.env.BUCKET_NAME;
 const awsAccessKey = process.env.AWS_ACCESS_KEY;
 const awsSecretKey = process.env.AWS_SECRET_KEY;
 
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
 
 const s3 = new S3Client({
   credentials: {
@@ -19,69 +23,86 @@ const s3 = new S3Client({
   region: bucketRegion,
 });
 
+const deleteFileFromS3 = async (fileName, folder) => {
+  if (!fileName) return;
+
+  const params = {
+    Bucket: process.env.BUCKET_NAME,
+    Key: `uploads/${folder}/${fileName}`,
+  };
+
+  const command = new DeleteObjectCommand(params);
+  await s3.send(command);
+};
+
 class AdminOperations {
+  static buildQueryObject(status) {
+    let queryObject = {};
+    switch (status) {
+      case "offerLetter":
+        queryObject = { "status.offerLetter": { $exists: false } };
+        break;
+      case "taskPending":
+        queryObject = {
+          $and: [
+            { "status.offerLetter": { $exists: true } },
+            {
+              $or: [
+                { "status.tasks": { $exists: false } },
+                { "status.tasks": { $size: 0 } },
+              ],
+            },
+          ],
+        };
+        break;
+      case "verification":
+        queryObject = {
+          $and: [
+            { "status.offerLetter": { $exists: true } },
+            { "status.tasks": { $exists: true, $ne: [] } },
+            { "status.taskSubmission": { $exists: true, $ne: [] } },
+            { "status.taskVerified": false },
+          ],
+        };
+        break;
+      case "certificate":
+        queryObject = {
+          $and: [
+            { "status.offerLetter": { $exists: true } },
+            { "status.tasks": { $exists: true, $ne: [] } },
+            { "status.taskSubmission": { $exists: true, $ne: [] } },
+            { "status.taskVerified": true },
+            { "status.completionCertificate": { $exists: false } },
+          ],
+        };
+        break;
+      default:
+        break;
+    }
+    return queryObject;
+  }
+
   static async getUsers(reqQuery) {
-    let QueryObject = {};
-    const { internshipStatus, page, email, internshipDomain } = reqQuery;
-    if (internshipStatus === "offerletter") {
-      QueryObject = {
-        "status.offerLetter": { $exists: false }, // or null if you're sure it's always null, otherwise use { $in: [null, undefined] }
-      };
-    }
-    if (internshipStatus === "taskallocation") {
-      QueryObject = {
-        $and: [
-          { "status.offerLetter": { $exists: true } },
-          {
-            $or: [
-              { "status.tasks": { $exists: false } },
-              { "status.tasks": { $size: 0 } },
-            ],
-          },
-        ],
-      };
-    }
-    if (internshipStatus === "verification") {
-      QueryObject = {
-        $and: [
-          { "status.offerLetter": { $exists: true } },
-          { "status.tasks": { $exists: true, $ne: [] } },
-          { "status.taskSubmission": { $exists: true, $ne: [] } },
-          { "status.taskVerified": false },
-        ],
-      };
-    }
-    if (internshipStatus === "certificate") {
-      QueryObject = {
-        $and: [
-          { "status.offerLetter": { $exists: true } },
-          { "status.tasks": { $exists: true, $ne: [] } },
-          { "status.taskSubmission": { $exists: true, $ne: [] } },
-          { "status.taskVerified": true },
-          { "status.completionCertificate": { $exists: false } },
-        ],
-      };
-    }
+    const { internshipStatus, page = 1, email, internshipDomain } = reqQuery;
+    const queryObject = this.buildQueryObject(internshipStatus);
+
     if (internshipDomain) {
-      QueryObject.internshipDomain = {
+      queryObject.internshipDomain = {
         $regex: internshipDomain,
         $options: "i",
       };
     }
     if (email) {
-      QueryObject.email = {
-        $regex: email,
-        $options: "i",
-      };
+      queryObject.email = { $regex: email, $options: "i" };
     }
-    const skip = 10 * (page - 1);
 
-    const users = await User.find(QueryObject)
+    const skip = 10 * (page - 1);
+    const users = await User.find(queryObject)
       .select("-password")
       .limit(10)
       .skip(skip)
       .sort("createdAt");
-    const count = await User.countDocuments(QueryObject);
+    const count = await User.countDocuments(queryObject);
 
     return { users, count };
   }
@@ -282,6 +303,78 @@ class AdminOperations {
     } catch (error) {
       return { success: false, message: "something went wrong" };
     }
+  }
+  static async deleteStatus(reqParams) {
+    const { status, userId } = reqParams;
+
+    const unsetFields = {};
+
+    let user = await User.findById(userId);
+    if (!user) {
+      throw new BadRequestError("No user found, Something went wrong");
+    }
+
+    switch (status) {
+      case "offer":
+        unsetFields["status.offerLetter"] = "";
+        unsetFields["status.startDate"] = "";
+        unsetFields["status.submissionDeadline"] = "";
+        await deleteFileFromS3(user.status.offerLetter, "offerletter");
+        break;
+
+      case "task":
+        unsetFields["status.tasks"] = "";
+        break;
+
+      case "verification":
+        unsetFields["status.taskVerified"] = "";
+        break;
+
+      case "certificate":
+        unsetFields["status.completionCertificate"] = "";
+        await deleteFileFromS3(
+          user.status.completionCertificate,
+          "certificate"
+        );
+        break;
+
+      case "submittedtask":
+        unsetFields["status.taskSubmission"] = "";
+        break;
+
+      default:
+        throw new BadRequestError("Invalid status type");
+    }
+
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId },
+      { $unset: unsetFields },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      throw new BadRequestError("No user found, Something went wrong");
+    }
+
+    return { user: updatedUser };
+  }
+
+  static async deleteUser(userId) {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      throw new BadRequestError("No user found, Something went wrong");
+    }
+
+    // Delete associated files from S3
+    await deleteFileFromS3(user.status.offerLetter, "offerletter");
+    await deleteFileFromS3(user.status.completionCertificate, "certificate");
+    await deleteFileFromS3(user.resume, "resume");
+
+    // Delete the user from the database
+    await User.deleteOne({ _id: userId });
+
+    return { userId };
   }
 }
 

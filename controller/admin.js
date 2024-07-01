@@ -84,6 +84,17 @@ const UpdateUser = async (req, res) => {
   res.status(StatusCodes.OK).json({ success, message, user });
 };
 
+const DeleteUserStatus = async (req, res) => {
+  const { user } = await AdminOperations.deleteStatus(req.params);
+
+  res.status(StatusCodes.OK).json({ user });
+};
+
+const DeleteUser = async (req, res) => {
+  const { userId } = await AdminOperations.deleteUser(req.params.userId);
+  res.status(StatusCodes.OK).json({ userId });
+};
+
 module.exports = {
   CreateAdminController,
   LoginAdminController,
@@ -94,5 +105,7 @@ module.exports = {
   DeleteAdmin,
   GetUsersStatistics,
   GetSingleUser,
+  DeleteUserStatus,
   UpdateUser,
+  DeleteUser,
 };
