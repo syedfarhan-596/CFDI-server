@@ -3,8 +3,7 @@ const express = require("express");
 require("dotenv").config();
 require("express-async-errors");
 const cors = require("cors");
-const SendMail = require("./nodemailer");
-
+const SendMailController = require("./controller");
 //modules import
 const connectDB = require("./db/connect-DB");
 const PageNotFound = require("./errors/not-found");
@@ -22,13 +21,7 @@ app.use(express.json());
 
 //main routes
 
-app.use("/").post((req, res) => {
-  SendMail(
-    "info@codefordigitalindia.com",
-    `Message from ${req.body.name} ,Sender Email:- ${req.body.email}`,
-    req.body.message
-  );
-});
+app.use("/", SendMailController);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 
