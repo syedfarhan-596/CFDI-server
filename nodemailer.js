@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 async function SendMail(senderEmail, subject, text, body) {
   try {
     const info = await transporter.sendMail({
-      from: '"Code For Digital India" <learningweb2002@gmail.com>', // sender address
+      from: '"Code For Digital India" <noreply@codefordigitalindia.com>', // sender address
       to: senderEmail, // list of receivers
       subject: subject, // Subject line
       html: `
